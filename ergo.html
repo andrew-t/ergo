@@ -1,0 +1,160 @@
+<html>
+<head>
+<title>Ergo Settler</title>
+<script>
+document.body.addEventListener('touchstart', function(e){ e.preventDefault(); });
+
+function ergo()
+{
+	var table=document.getElementById('table').value.toUpperCase().split("\n");
+	var output="<table><tr><th>A</th><th>B</th><th>C</th><th>D</th><th>Result</th></tr>";
+	var AA=new Array(0, 0); var BB=new Array(0, 0);
+	var CC=new Array(0, 0); var DD=new Array(0, 0);
+	var OK = 0;
+	for (A=0; A<2; A++) for (B=0; B<2; B++)
+	for (C=0; C<2; C++) for (D=0; D<2; D++)
+	{
+		var combo = "";
+		for (i=0; i<table.length; ++i)
+		{
+			var t = table[i].replace(/A/g, A).replace(/B/g, B).replace(/C/g, C).replace(/D/g, D).replace(/T/g, "1").replace(/F/g, "0");
+			if (t.length==0) continue;
+			while (t.length>1)
+			{
+				var o=t;
+				// () BRACKETS
+				t=t.replace(/\((.)\)/, "$1");
+				if (o!=t) continue;
+				// ~ NOT
+				t=t.replace(/[~!]1/, "0");
+				t=t.replace(/[~!]0/, "1");
+				if (o!=t) continue;
+				// > THEN
+				// lovely, i googled 'truth table for' and it guessed i'd ask about implies.
+				t=t.replace(/0(\u2283|\u21d2|\u2192|>)[01]/, "1");
+				if (o!=t) continue;
+				t=t.replace(/1(\u2283|\u21d2|\u2192|>)([01])/, "$2");
+				if (o!=t) continue;
+				// V OR
+				t=t.replace(/0(V|\u2228|\/)0/, "0");
+				if (o!=t) continue;
+				t=t.replace(/[01](V|\u2228|\/)[01]/, "1");
+				if (o!=t) continue;
+				// . AND
+				t=t.replace(/1(\.|\u2022|\u00B7|\&|\^)1/, "1");
+				if (o!=t) continue;
+				t=t.replace(/[01](\.|\u2022|\u00B7|\&|\^)[01]/, "0");
+				if (o!=t) continue;
+				if (t.length>1)
+				{
+					alert('Error in line '+(i+1)+" of the proof.");
+					return;
+				}
+			}
+			if (t=="0") combo += (i+1) + " ";
+			else if (t!="1") combo += "error on "+(i+1)+"; ";
+		}
+		if (combo == "")
+		{
+			combo = "<span class=\"true\">OK</span>"; 
+			AA[A]=1; BB[B]=1; CC[C]=1; DD[D]=1; 
+			++OK;
+		}
+		else combo = "<span class=\"false\">" + combo + "false</span>";
+		output+="<tr><td>"+A+"</td><td>"+B+"</td><td>"+C+"</td><td>"+D+"</td><td>"+combo+"</td></tr>";
+	}
+	output+="</table>";
+	if (OK>0)
+		o2 = "<p><b>A</b> " + explain(AA) +
+			"<br /><b>B</b> " + explain(BB) +
+			"<br /><b>C</b> " + explain(CC) +
+			"<br /><b>D</b> " + explain(DD) + "</p>";
+	else o2 = "<p class=\"bad\">STATEMENTS ARE INCONSISTENT</p>";
+	document.getElementById("out").innerHTML=o2+"<center><a href=\"javascript:document.getElementById('out').innerHTML='';\">Clear result</a></center>"+output;
+}
+
+function explain(E)
+{
+	if (E[0]+E[1]==2) return "is <span class=\"und\">UNDECIDED</span>";
+	else if (E[0]==1) return "is <span class=\"false\">FALSE</span>";
+	else if (E[1]==1) return "is <span class=\"true\">TRUE</span>";
+	else return "<span class=\"bad\">CANNOT BE TRUE OR FALSE</span>";
+}
+
+function lay(E)
+{
+	if (E.length==0)
+	{
+		var a=document.getElementById('table');
+		if (a.value=="") return;
+		a.value=a.value.substr(0, a.value.length-1);
+	}
+	else if (E.length==5)
+	{
+		document.getElementById('table').value="";
+	}
+	else
+		document.getElementById('table').value+=E;
+}
+</script>
+<style>
+.bad {font-weight: bold; color: #f00}
+.false {font-weight: bold; color: #a00}
+.true {font-weight: bold; color: #060}
+.und {font-weight: bold; color: #000}
+table, td, th {border: solid 1px black}
+table {width: 100%;}
+td, th {margin:0px; padding: 5px; background: white;}
+body, input {font-size: 20px;}
+textarea {font-family: monospace; font-size: 25px; width: 280px; height: 170px;}
+.one {width: 280px}
+.two {width: 137px}
+.three {width: 90px}
+.four {width: 66px}
+#in {margin-bottom: 15px}
+div {width: 100%; text-align: center;}
+body {background: #aaa}
+</style>
+<meta name="viewport" content="width=device-width; initial-scale=1.0; maximum-scale=1.0; user-scalable=0;" /> 
+<meta name="apple-mobile-web-app-capable" content="yes" /> 
+<link rel="apple-touch-icon" href="ergo.png"/>
+<link rel="apple-touch-startup-image" href="ergosplash.png" />  
+</head>
+<body>
+
+<form onSubmit="ergo(); return false;">
+
+<div id="in">
+<textarea id="table" rows="4" cols="25"></textarea><br />
+<input type="submit" value="&there4; Ergo" class="one" />
+</div>
+
+<div id="out">
+</div>
+
+<div id="keys">
+<input type="button" onClick="lay('A');" value="A" class="four" />
+<input type="button" onClick="lay('B');" value="B" class="four" />
+<input type="button" onClick="lay('C');" value="C" class="four" />
+<input type="button" onClick="lay('D');" value="D" class="four" /> <br />
+
+<input type="button" onClick="lay('~');" value="~" class="three" />
+<input type="button" onClick="lay('(');" value="(" class="three" />
+<input type="button" onClick="lay(')');" value=")" class="three" /> <br />
+
+<input type="button" onClick="lay('&#x2283;');" value="&#x2283;" class="three" />
+<input type="button" onClick="lay('&#x2228;');" value="&#x2228;" class="three" />
+<input type="button" onClick="lay('&#x2022;');" value="&#x2022;" class="three" /> <br />
+
+<input type="button" onClick="lay('1');" value="TRUE" style="color: #0a0" class="two" />
+<input type="button" onClick="lay('0');" value="FALSE" style="color: #a00" class="two" /> <br />
+
+<input type="button" onClick="lay('');" value="&#x2190;" class="three" />
+<input type="button" onClick="lay('clear');" value="&times;" class="three" />
+<input type="button" onClick="lay('\n');" value="&crarr;" class="three" />
+</div>
+
+</form>
+
+</body>
+</html>
